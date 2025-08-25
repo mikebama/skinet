@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./API
+      dockerfile: Dockerfile
+    image: skinet_api:latest
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      # EF Core (or other) can pick this up as Configuration["ConnectionStrings:DefaultConnection"]
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=skinet;Username=skinet;Password=skinetpwd
+    depends_on:
+      - db
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: skinet_client:latest
+    ports:
+      - "4200:80"
+    environment:
+      - API_URL=http://localhost:5000
+    depends_on:
+      - api
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: skinet
+      POSTGRES_PASSWORD: skinetpwd
+      POSTGRES_DB: skinet
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  db_data:
